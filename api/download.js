@@ -1,4 +1,4 @@
-const SnapTikClient = require('.client.js'); // Path yang benar di Vercel
+const SnapTikClient = require('./client.js'); // Path yang benar di Vercel
 const axios = require('axios');
 const path = require('path');
 
