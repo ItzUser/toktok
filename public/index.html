@@ -58,15 +58,15 @@
     </style>
 </head>
 <body>
-    <h1>Download TikTok Video</h1>
-    <input type="text" id="tiktokUrl" placeholder="Enter TikTok Video URL" />
+    <h1>Downloader TikTok</h1>
+    <input type="text" id="tiktokUrl" placeholder="Masukkan URL TikTok" />
     <button onclick="downloadVideo()">Download</button>
 
     <script>
         function downloadVideo() {
             const url = document.getElementById('tiktokUrl').value;
-            if (!url) return alert('Please enter a TikTok URL!');
-    
+            if (!url) return alert('Harap masukkan URL TikTok!');
+
             const link = document.createElement('a');
             link.href = `/api/download?url=${encodeURIComponent(url)}`;
             link.setAttribute('download', 'tiktok_video.mp4');
@@ -74,6 +74,6 @@
             link.click();
             link.remove();
         }
-    </script>    
+    </script>
 </body>
 </html>
