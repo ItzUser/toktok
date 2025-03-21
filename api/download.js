@@ -1,16 +1,12 @@
-const SnapTikClient = require('./client.js'); // Path ke client.js di folder API
-const axios = require('axios');
-
 export default async function handler(req, res) {
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: 'URL TikTok wajib diisi!' });
 
-    const snapTik = new SnapTikClient();
-
     try {
+        const snapTik = new SnapTikClient();
         const result = await snapTik.process(url);
 
-        if (['video', 'photo', 'slideshow'].includes(result.type)) {
+        if (result.type === 'video' || result.type === 'photo' || result.type === 'slideshow') {
             const videoUrl = result.data.sources[0].url;
 
             const response = await axios.get(videoUrl, { responseType: 'stream' });
