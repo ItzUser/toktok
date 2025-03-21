@@ -11,7 +11,7 @@ class Resource {
   download(config = {}) {
     return axios({
       url: this.url,
-      type: 'stream',
+      responseType: 'stream',
       ...config
     });
   }
@@ -19,18 +19,16 @@ class Resource {
 
 class SnapTikClient {
   constructor(config = {}) {
-    this.axios = axios.create(this.config = {
+    this.axios = axios.create({
       baseURL: 'https://dev.snaptik.app',
-      ...config,
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      ...config
     });
   }
 
   async get_token() {
-    const {
-      data
-    } = await this.axios({
-      url: '/'
-    });
+    const { data } = await this.axios({ url: '/' });
     const $ = cheerio.load(data);
     return $('input[name="token"]').val();
   }
@@ -42,9 +40,7 @@ class SnapTikClient {
     form.append('token', token);
     form.append('url', url);
 
-    const {
-      data
-    } = await this.axios({
+    const { data } = await this.axios({
       url: '/abc2.php',
       method: 'POST',
       data: form
@@ -54,72 +50,57 @@ class SnapTikClient {
   }
 
   async eval_script(script1) {
-    const script2 = await new Promise(resolve => Function('eval', script1)(resolve));
-    return new Promise((resolve, reject) => {
-      let html = '';
-      const [
-        k,
-        v
-      ] = [
-        'keys',
-        'values'
-      ].map(x => Object[x]({
-        $: () => Object.defineProperty({
-          remove() {},
-          style: {
-            display: ''
-          }
-        }, 'innerHTML', {
-          set: t => (html = t)
-        }),
-        app: {
-          showAlert: reject
-        },
-        document: {
-          getElementById: () => ({
-            src: ''
-          })
-        },
-        fetch: a => {
-          return resolve({
-            html,
-            oembed_url: a
-          }), {
-            json: () => ({
-              thumbnail_url: ''
-            })
-          };
-        },
-        gtag: () => 0,
-        Math: {
-          round: () => 0
-        },
-        XMLHttpRequest: function() {
-          return {
-            open() {},
-            send() {}
-          }
-        },
-        window: {
-          location: {
-            hostname: 'snaptik.app'
-          }
-        }
-      }));
+    try {
+      if (!script1.includes("fetch") || script1.length < 50) {
+        throw new Error("Script tidak valid atau berbahaya");
+      }
 
-      Function(...k, script2)(...v);
-    });
+      const script2 = await new Promise((resolve) => Function("eval", script1)(resolve));
+
+      return new Promise((resolve, reject) => {
+        let html = "";
+        const [k, v] = ["keys", "values"].map((x) =>
+          Object[x]({
+            $: () =>
+              Object.defineProperty(
+                {
+                  remove() {},
+                  style: { display: "" },
+                },
+                "innerHTML",
+                {
+                  set: (t) => (html = t),
+                }
+              ),
+            app: { showAlert: reject },
+            document: { getElementById: () => ({ src: "" }) },
+            fetch: (a) => {
+              return (
+                resolve({ html, oembed_url: a }),
+                {
+                  json: () => ({ thumbnail_url: "" }),
+                }
+              );
+            },
+            gtag: () => 0,
+            Math: { round: () => 0 },
+            XMLHttpRequest: function () {
+              return { open() {}, send() {} };
+            },
+            window: { location: { hostname: "snaptik.app" } },
+          })
+        );
+
+        Function(...k, script2)(...v);
+      });
+    } catch (error) {
+      console.error("Error evaluating script:", error.message);
+      throw new Error("Script tidak bisa diproses.");
+    }
   }
 
   async get_hd_video(token) {
-    const {
-      data: {
-        error,
-        url
-      }
-    } = await this.axios({
-      url: '/getHdLink.php?token=' + token
-    });
+    const { data: { error, url } } = await this.axios({ url: '/getHdLink.php?token=' + token });
 
     if (error) throw new Error(error);
     return url;
@@ -133,9 +114,7 @@ class SnapTikClient {
       const hd_token = $('div.video-links > button[data-tokenhd]').data('tokenhd');
       const hd_url = new URL(await this.get_hd_video(hd_token));
       const token = hd_url.searchParams.get('token');
-      const {
-        url
-      } = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const { url } = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
 
       return {
         type: 'video',
@@ -144,17 +123,15 @@ class SnapTikClient {
             url,
             hd_url.href,
             ...$('div.video-links > a:not(a[href="/"])').toArray()
-            .map(elem => $(elem).attr('href'))
-            .map(x => x.startsWith('/') ? this.config.baseURL + x : x)
+              .map(elem => $(elem).attr('href'))
+              .map(x => x.startsWith('/') ? this.config.baseURL + x : x)
           ].map((...x) => new Resource(...x))
         }
       };
     })() : (x => x.data.photos.length == 1 ? ({
       ...x,
       type: 'photo',
-      data: {
-        sources: x.data.photos[0].sources
-      }
+      data: { sources: x.data.photos[0].sources }
     }) : x)({
       type: 'slideshow',
       data: {
@@ -169,18 +146,16 @@ class SnapTikClient {
   }
 
   async process(url) {
-    const script = await this.get_script(url);
-    const {
-      html,
-      oembed_url
-    } = await this.eval_script(script);
+    try {
+      const script = await this.get_script(url);
+      const { html, oembed_url } = await this.eval_script(script);
 
-    const res = {
-      ...(await this.parse_html(html)),
-      url
-    };
-
-    return res.data.oembed_url = oembed_url, res;
+      const res = { ...(await this.parse_html(html)), url };
+      return (res.data.oembed_url = oembed_url), res;
+    } catch (error) {
+      console.error("Error processing URL:", error.message || error);
+      throw new Error("Gagal memproses URL. Coba ulangi atau cek link.");
+    }
   }
 }
 
