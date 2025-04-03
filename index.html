@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Downloader</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .input-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-right: 10px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+
+        .favicon {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .favicon:hover {
+            background-color: #0056b3;
+        }
+
+        .favicon i {
+            font-size: 20px;
+        }
+
+        #previewContainer {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 90vw;
+            display: none;
+        }
+
+        video {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        .download-buttons {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .download-buttons button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s;
+        }
+
+        #downloadHD {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #downloadHD:hover {
+            background-color: #0056b3;
+        }
+
+        #downloadNormal {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #downloadNormal:hover {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <h1>TikTok Downloader</h1>
+    <div class="input-container">
+        <input type="text" id="url" placeholder="Masukkan URL TikTok">
+        <button class="favicon" onclick="fetchVideo()">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+    
+    <div id="previewContainer">
+        <video id="preview" controls></video>
+        <br>
+        <div class="download-buttons">
+            <button id="downloadHD" onclick="downloadVideo('hd')">Download HD</button>
+            <button id="downloadNormal" onclick="downloadVideo('normal')">Download Normal</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import fetchTikTokVideo from './api/tiktok.js';
+
+        let videoUrlHD = "";
+        let videoUrlNormal = "";
+
+        async function fetchVideo() {
+            const url = document.getElementById("url").value;
+            if (!url) {
+                alert("Masukkan URL terlebih dahulu!");
+                return;
+            }
+
+            try {
+                const data = await fetchTikTokVideo(url);
+                console.log(data); // Debugging untuk melihat struktur API
+
+                if (data && data.status && data.data && data.data.urls) {
+                    const urls = data.data.urls;
+
+                    // Pastikan ada URL sebelum mengambil indeks
+                    if (urls.length >= 2) {
+                        videoUrlHD = urls[1]; // Asumsi: Link HD ada di indeks pertama
+                        videoUrlNormal = urls[2]; // Asumsi: Link Normal ada di indeks kedua
+
+                        document.getElementById("preview").src = videoUrlHD;
+                        document.getElementById("previewContainer").style.display = "block";
+                    } else {
+                        alert("Gagal mendapatkan URL video.");
+                    }
+                } else {
+                    alert("Gagal mengambil video. Periksa URL yang dimasukkan.");
+                }
+            } catch (error) {
+                alert("Terjadi kesalahan saat mengambil data.");
+                console.error(error);
+            }
+        }
+
+        function downloadVideo(quality) {
+            let videoUrl = quality === 'hd' ? videoUrlHD : videoUrlNormal;
+            if (!videoUrl) {
+                alert("Tidak ada video untuk diunduh.");
+                return;
+            }
+
+            const a = document.createElement("a");
+            a.href = videoUrl;
+            a.download = quality === 'hd' ? "tiktok_video_hd.mp4" : "tiktok_video_normal.mp4";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+    </script>
+</body>
+</html>
