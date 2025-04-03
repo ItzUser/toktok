@@ -148,15 +148,14 @@
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
-                console.log(data); // Debugging untuk melihat struktur API
+                console.log(data); 
 
                 if (data.status && data.data && data.data.urls) {
                     const urls = data.data.urls;
 
-                    // Pastikan ada URL sebelum mengambil indeks
                     if (urls.length >= 2) {
-                        videoUrlHD = urls[1]; // Asumsi: Link HD ada di indeks pertama
-                        videoUrlNormal = urls[2]; // Asumsi: Link Normal ada di indeks kedua
+                        videoUrlHD = urls[1]; 
+                        videoUrlNormal = urls[2]; 
 
                         document.getElementById("preview").src = videoUrlHD;
                         document.getElementById("previewContainer").style.display = "block";
