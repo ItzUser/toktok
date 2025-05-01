@@ -262,6 +262,34 @@
       100% { transform: rotate(360deg); }
     }
     
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #666;
+      font-size: 0.85rem;
+      padding: 20px 0;
+      width: 100%;
+    }
+    
+    .copyright {
+      margin-bottom: 8px;
+    }
+    
+    .credits {
+      font-size: 0.8rem;
+    }
+    
+    .credit-link {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    .credit-link:hover {
+      color: var(--secondary);
+      text-decoration: underline;
+    }
+    
     @media (max-width: 600px) {
       .header {
         margin-bottom: 20px;
@@ -273,6 +301,11 @@
       
       .input-card, .preview-card {
         padding: 20px;
+      }
+      
+      .footer {
+        margin-top: 30px;
+        padding: 15px 0;
       }
     }
   </style>
@@ -327,6 +360,15 @@
       </div>
     </div>
   </div>
+  
+  <footer class="footer">
+    <div class="copyright">
+      &copy; 2025 TikTok Downloader. All rights reserved.
+    </div>
+    <div class="credits">
+      Developed by <a href="#" class="credit-link">Justin</a> | API by <a href="https://api.siputzx.my.id" class="credit-link">SiputZX</a>
+    </div>
+  </footer>
 
   <script>
     let videoUrlHD = "";
@@ -340,7 +382,6 @@
         return;
       }
 
-      // Show loading indicator
       document.getElementById("loadingIndicator").style.display = "block";
       document.getElementById("previewContainer").style.display = "none";
 
@@ -349,9 +390,8 @@
       try {
         const response = await fetch(apiUrl);
         const result = await response.json();
-        console.log(result); // Debugging
+        console.log(result); 
 
-        // Hide loading indicator
         document.getElementById("loadingIndicator").style.display = "none";
 
         if (result.success && result.data) {
@@ -359,8 +399,8 @@
           const metadata = result.data.metadata;
 
           const videos = download.video;
-          videoUrlHD = videos[1] || "";
-          videoUrlNormal = videos[0] || "";
+          videoUrlHD = videos[0] || "";
+          videoUrlNormal = videos[1] || "";
           audioUrl = download.audio || "";
 
           if (videoUrlHD) {
@@ -374,10 +414,9 @@
           }
         } else {
           showNotification("Gagal mengambil data. Pastikan URL benar.");
-          console.log(result); // Debugging jika error
+          console.log(result);
         }
       } catch (error) {
-        // Hide loading indicator
         document.getElementById("loadingIndicator").style.display = "none";
         showNotification("Terjadi kesalahan saat mengambil data.");
         console.error(error);
