@@ -160,7 +160,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    .video-container {
+    .media-container {
       border-radius: 12px;
       overflow: hidden;
       margin-bottom: 20px;
@@ -172,6 +172,91 @@
       width: 100%;
       display: block;
       border-radius: 12px;
+    }
+    
+    .photo-container {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .photo-carousel {
+      display: flex;
+      transition: transform 0.5s ease;
+      height: 100%;
+      width: 100%;
+    }
+    
+    .photo-item {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000;
+    }
+    
+    .photo-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      transition: all 0.3s;
+    }
+    
+    .carousel-btn:hover {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .prev-btn {
+      left: 10px;
+    }
+    
+    .next-btn {
+      right: 10px;
+    }
+    
+    .carousel-indicators {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+    }
+    
+    .indicator.active {
+      background-color: white;
+      transform: scale(1.2);
     }
     
     .description {
@@ -188,9 +273,11 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 10px;
+      width: 100%;
     }
     
     .download-btn {
+      width: 100%;
       padding: 15px;
       border: none;
       border-radius: 10px;
@@ -343,11 +430,36 @@
     </div>
 
     <div class="preview-card" id="previewContainer">
-      <div class="video-container">
+      <!-- Video Container (will be shown for videos) -->
+      <div class="media-container" id="videoContainer">
         <video id="preview" class="video-player" controls></video>
       </div>
+      
+      <!-- Photo Container (will be shown for photos) -->
+      <div class="media-container" id="photoContainer" style="display:none;">
+        <div class="photo-container">
+          <button class="carousel-btn prev-btn" id="prevPhoto">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          
+          <div class="photo-carousel" id="photoCarousel">
+            <!-- Photos will be added here dynamically -->
+          </div>
+          
+          <button class="carousel-btn next-btn" id="nextPhoto">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          
+          <div class="carousel-indicators" id="photoIndicators">
+            <!-- Indicators will be added here dynamically -->
+          </div>
+        </div>
+      </div>
+      
       <div class="description" id="description"></div>
-      <div class="download-grid">
+      
+      <!-- Video Download Buttons -->
+      <div class="download-grid" id="videoButtons">
         <button id="downloadHD" class="download-btn btn-hd" onclick="downloadVideo('hd')">
           <i class="fas fa-download"></i> Download HD
         </button>
@@ -355,6 +467,19 @@
           <i class="fas fa-download"></i> Download Normal
         </button>
         <button id="downloadAudio" class="download-btn btn-audio" onclick="downloadAudio()">
+          <i class="fas fa-music"></i> Download Audio
+        </button>
+      </div>
+      
+      <!-- Photo Download Buttons -->
+      <div class="download-grid" id="photoButtons" style="display:none;">
+        <button id="downloadCurrentPhoto" class="download-btn btn-hd" onclick="downloadCurrentPhoto()">
+          <i class="fas fa-download"></i> Download Current Photo
+        </button>
+        <button id="downloadAllPhotos" class="download-btn btn-normal" onclick="downloadAllPhotos()">
+          <i class="fas fa-images"></i> Download All Photos
+        </button>
+        <button id="downloadPhotoAudio" class="download-btn btn-audio" onclick="downloadAudio()">
           <i class="fas fa-music"></i> Download Audio
         </button>
       </div>
@@ -366,7 +491,7 @@
       &copy; 2025 TikTok Downloader. All rights reserved.
     </div>
     <div class="credits">
-      Developed by <a href="#" class="credit-link">Justin</a> | API by <a href="https://api.siputzx.my.id" class="credit-link">SiputZX</a>
+      Developed by <a href="#" class="credit-link">Justin Alfred</a> | API by <a href="https://api.siputzx.my.id" class="credit-link">SiputZX</a>
     </div>
   </footer>
 
@@ -374,6 +499,9 @@
     let videoUrlHD = "";
     let videoUrlNormal = "";
     let audioUrl = "";
+    let photoUrls = [];
+    let currentPhotoIndex = 0;
+    let contentType = "";
 
     async function fetchVideo() {
       const url = document.getElementById("url").value;
@@ -381,6 +509,15 @@
         showNotification("Masukkan URL terlebih dahulu!");
         return;
       }
+
+      videoUrlHD = "";
+      videoUrlNormal = "";
+      audioUrl = "";
+      photoUrls = [];
+      currentPhotoIndex = 0;
+      
+      document.getElementById("photoCarousel").innerHTML = "";
+      document.getElementById("photoIndicators").innerHTML = "";
 
       document.getElementById("loadingIndicator").style.display = "block";
       document.getElementById("previewContainer").style.display = "none";
@@ -390,36 +527,140 @@
       try {
         const response = await fetch(apiUrl);
         const result = await response.json();
-        console.log(result); 
+        console.log(result);
 
         document.getElementById("loadingIndicator").style.display = "none";
 
         if (result.success && result.data) {
           const download = result.data.download;
           const metadata = result.data.metadata;
-
-          const videos = download.video;
-          videoUrlHD = videos[0] || "";
-          videoUrlNormal = videos[1] || "";
+          
+          // Set description
+          const desc = metadata.description || "(Tidak ada deskripsi)";
+          document.getElementById("description").innerText = `${desc}`;
+          
           audioUrl = download.audio || "";
+          
+          if (download.video && download.video.length > 0) {
+            contentType = "video";
+            const videos = download.video;
+            videoUrlHD = videos[0] || "";
+            videoUrlNormal = videos[1] || "";
 
-          if (videoUrlHD) {
+            document.getElementById("videoContainer").style.display = "block";
+            document.getElementById("photoContainer").style.display = "none";
+
+            document.getElementById("videoButtons").style.display = "block";
+            document.getElementById("photoButtons").style.display = "none";
+            
             document.getElementById("preview").src = videoUrlHD;
             document.getElementById("previewContainer").style.display = "block";
+          } 
+          else if (download.photo && download.photo.length > 0) {
+            contentType = "photo";
+            photoUrls = download.photo;
+            
+            document.getElementById("videoContainer").style.display = "none";
+            document.getElementById("photoContainer").style.display = "block";
 
-            const desc = metadata.description || "(Tidak ada deskripsi)";
-            document.getElementById("description").innerText = `${desc}`;
-          } else {
-            showNotification("Gagal mendapatkan URL video.");
+            document.getElementById("videoButtons").style.display = "none";
+            document.getElementById("photoButtons").style.display = "block";
+            
+            createPhotoCarousel(photoUrls);
+            
+            document.getElementById("previewContainer").style.display = "block";
+          } 
+          else {
+            showNotification("Tidak ada media yang ditemukan.");
           }
         } else {
           showNotification("Gagal mengambil data. Pastikan URL benar.");
-          console.log(result);
+          console.log(result); // Debugging jika error
         }
       } catch (error) {
+        // Hide loading indicator
         document.getElementById("loadingIndicator").style.display = "none";
         showNotification("Terjadi kesalahan saat mengambil data.");
         console.error(error);
+      }
+    }
+    
+    function createPhotoCarousel(photos) {
+      const carousel = document.getElementById("photoCarousel");
+      const indicators = document.getElementById("photoIndicators");
+      
+      // Clear previous content
+      carousel.innerHTML = "";
+      indicators.innerHTML = "";
+      
+      // Add photos to carousel
+      photos.forEach((photoUrl, index) => {
+        // Create photo item
+        const photoItem = document.createElement("div");
+        photoItem.className = "photo-item";
+        
+        // Create image
+        const img = document.createElement("img");
+        img.className = "photo-img";
+        img.src = photoUrl;
+        img.alt = `Photo ${index + 1}`;
+        
+        photoItem.appendChild(img);
+        carousel.appendChild(photoItem);
+        
+        // Create indicator
+        const indicator = document.createElement("div");
+        indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
+        indicator.onclick = () => showPhoto(index);
+        indicators.appendChild(indicator);
+      });
+      
+      // Show or hide navigation buttons based on number of photos
+      const prevBtn = document.getElementById("prevPhoto");
+      const nextBtn = document.getElementById("nextPhoto");
+      
+      if (photos.length <= 1) {
+        prevBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        indicators.style.display = "none";
+      } else {
+        prevBtn.style.display = "flex";
+        nextBtn.style.display = "flex";
+        indicators.style.display = "flex";
+      }
+      
+      // Set up event listeners for navigation
+      prevBtn.onclick = () => navigatePhoto(-1);
+      nextBtn.onclick = () => navigatePhoto(1);
+      
+      // Show first photo
+      showPhoto(0);
+    }
+    
+    function showPhoto(index) {
+      const carousel = document.getElementById("photoCarousel");
+      const indicators = document.querySelectorAll(".indicator");
+      
+      // Update current index
+      currentPhotoIndex = index;
+      
+      // Move carousel
+      carousel.style.transform = `translateX(-${index * 100}%)`;
+      
+      // Update indicators
+      indicators.forEach((indicator, i) => {
+        if (i === index) {
+          indicator.classList.add("active");
+        } else {
+          indicator.classList.remove("active");
+        }
+      });
+    }
+    
+    function navigatePhoto(direction) {
+      const newIndex = currentPhotoIndex + direction;
+      if (newIndex >= 0 && newIndex < photoUrls.length) {
+        showPhoto(newIndex);
       }
     }
 
@@ -437,6 +678,47 @@
       a.click();
       document.body.removeChild(a);
     }
+    
+    function downloadCurrentPhoto() {
+      if (photoUrls.length === 0 || currentPhotoIndex >= photoUrls.length) {
+        showNotification("Tidak ada foto untuk diunduh.");
+        return;
+      }
+      
+      const photoUrl = photoUrls[currentPhotoIndex];
+      downloadFile(photoUrl, `tiktok_photo_${currentPhotoIndex + 1}.jpg`);
+    }
+    
+    function downloadAllPhotos() {
+      if (photoUrls.length === 0) {
+        showNotification("Tidak ada foto untuk diunduh.");
+        return;
+      }
+      
+      // If only one photo, just download it
+      if (photoUrls.length === 1) {
+        downloadFile(photoUrls[0], "tiktok_photo.jpg");
+        return;
+      }
+      
+      // For multiple photos, download them with a delay to prevent browser blocking
+      showNotification(`Mengunduh ${photoUrls.length} foto...`);
+      
+      photoUrls.forEach((photoUrl, index) => {
+        setTimeout(() => {
+          downloadFile(photoUrl, `tiktok_photo_${index + 1}.jpg`);
+        }, index * 1000); // Download each photo with 1 second delay
+      });
+    }
+    
+    function downloadFile(url, filename) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
 
     function downloadAudio() {
       if (!audioUrl) {
@@ -444,12 +726,7 @@
         return;
       }
 
-      const a = document.createElement("a");
-      a.href = audioUrl;
-      a.download = "tiktok_audio.mp3";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadFile(audioUrl, "tiktok_audio.mp3");
     }
 
     function showNotification(message) {
