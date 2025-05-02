@@ -491,7 +491,7 @@
       &copy; 2025 TikTok Downloader. All rights reserved.
     </div>
     <div class="credits">
-      Developed by <a href="#" class="credit-link">Justin Alfred</a> | API by <a href="https://api.siputzx.my.id" class="credit-link">SiputZX</a>
+      Developed by <a href="https://www.instagram.com/justin_alfred.__" class="credit-link">Justin Alfred</a> | API by <a href="https://api.siputzx.my.id" class="credit-link">SiputZX</a>
     </div>
   </footer>
 
@@ -535,7 +535,7 @@
           const download = result.data.download;
           const metadata = result.data.metadata;
           
-          // Set description
+  
           const desc = metadata.description || "(Tidak ada deskripsi)";
           document.getElementById("description").innerText = `${desc}`;
           
@@ -575,10 +575,9 @@
           }
         } else {
           showNotification("Gagal mengambil data. Pastikan URL benar.");
-          console.log(result); // Debugging jika error
+          console.log(result); 
         }
       } catch (error) {
-        // Hide loading indicator
         document.getElementById("loadingIndicator").style.display = "none";
         showNotification("Terjadi kesalahan saat mengambil data.");
         console.error(error);
@@ -589,17 +588,16 @@
       const carousel = document.getElementById("photoCarousel");
       const indicators = document.getElementById("photoIndicators");
       
-      // Clear previous content
+  
       carousel.innerHTML = "";
       indicators.innerHTML = "";
       
-      // Add photos to carousel
       photos.forEach((photoUrl, index) => {
-        // Create photo item
+ 
         const photoItem = document.createElement("div");
         photoItem.className = "photo-item";
         
-        // Create image
+    
         const img = document.createElement("img");
         img.className = "photo-img";
         img.src = photoUrl;
@@ -608,14 +606,14 @@
         photoItem.appendChild(img);
         carousel.appendChild(photoItem);
         
-        // Create indicator
+     
         const indicator = document.createElement("div");
         indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
         indicator.onclick = () => showPhoto(index);
         indicators.appendChild(indicator);
       });
       
-      // Show or hide navigation buttons based on number of photos
+
       const prevBtn = document.getElementById("prevPhoto");
       const nextBtn = document.getElementById("nextPhoto");
       
@@ -629,11 +627,11 @@
         indicators.style.display = "flex";
       }
       
-      // Set up event listeners for navigation
+      
       prevBtn.onclick = () => navigatePhoto(-1);
       nextBtn.onclick = () => navigatePhoto(1);
       
-      // Show first photo
+      
       showPhoto(0);
     }
     
@@ -641,13 +639,13 @@
       const carousel = document.getElementById("photoCarousel");
       const indicators = document.querySelectorAll(".indicator");
       
-      // Update current index
       currentPhotoIndex = index;
       
-      // Move carousel
+    
+
       carousel.style.transform = `translateX(-${index * 100}%)`;
       
-      // Update indicators
+    
       indicators.forEach((indicator, i) => {
         if (i === index) {
           indicator.classList.add("active");
@@ -695,13 +693,13 @@
         return;
       }
       
-      // If only one photo, just download it
+
       if (photoUrls.length === 1) {
         downloadFile(photoUrls[0], "tiktok_photo.jpg");
         return;
       }
       
-      // For multiple photos, download them with a delay to prevent browser blocking
+    
       showNotification(`Mengunduh ${photoUrls.length} foto...`);
       
       photoUrls.forEach((photoUrl, index) => {
@@ -730,7 +728,7 @@
     }
 
     function showNotification(message) {
-      // Create a simple notification
+
       const notification = document.createElement("div");
       notification.style.position = "fixed";
       notification.style.bottom = "20px";
@@ -746,7 +744,7 @@
       
       document.body.appendChild(notification);
       
-      // Remove the notification after 3 seconds
+      
       setTimeout(() => {
         notification.style.opacity = "0";
         notification.style.transition = "opacity 0.5s";
